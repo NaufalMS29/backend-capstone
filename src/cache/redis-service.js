@@ -2,11 +2,10 @@ import redis from 'redis';
 
 class RedisService {
   constructor() {
-    const host = process.env.REDIS_SERVER || 'localhost';
+    // Gunakan REDIS_URL (dari Upstash) jika ada, fallback ke lokal
+    const redisUrl = process.env.REDIS_URL || `redis://${process.env.REDIS_SERVER || 'localhost'}:6379`;
 
-    this.client = redis.createClient({
-      url: `redis://${host}:6379`
-    });
+    this.client = redis.createClient({ url: redisUrl });
 
     this.client.on('error', (err) => console.error('Redis Client Error', err));
 
