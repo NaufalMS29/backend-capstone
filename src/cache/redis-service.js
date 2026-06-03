@@ -2,7 +2,6 @@ import redis from 'redis';
 
 class RedisService {
   constructor() {
-    // Gunakan REDIS_URL (dari Upstash) jika ada, fallback ke lokal
     const redisUrl = process.env.REDIS_URL || `redis://${process.env.REDIS_SERVER || 'localhost'}:6379`;
 
     this.client = redis.createClient({ url: redisUrl });

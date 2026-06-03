@@ -8,7 +8,6 @@ class SppgPredictCsvService {
   async processAndCombineBatch(userId, newRows, aiPredictions, cachedRows) {
     const finalBatchData = [...cachedRows];
 
-    // 1. Olah data baru yang sukses didapatkan dari FastAPI (jika ada)
     for (let i = 0; i < newRows.length; i++) {
       const currentAi = aiPredictions[i];
 
@@ -54,11 +53,10 @@ class SppgPredictCsvService {
         rekomendasi_kebijakan: rekomendasi,
         penjelasan_prediksi: penjelasan,
         model_llm: 'FastAPI-Batch/Ridge-Reg',
-        input_type: 'CSV' // ◄ Tambahkan penanda eksplisit di sini
+        input_type: 'CSV'
       });
     }
 
-    // 2. Simpan seluruh gabungan data massal ke database
     await this._repository.insertBatchPredictions(finalBatchData);
 
     return finalBatchData;

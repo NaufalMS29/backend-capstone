@@ -4,8 +4,6 @@ import TokenManager from '../../../security/token-manager.js';
 import response from '../../../utils/response.js';
 import InvariantError from '../../../exceptions/invariant-error.js';
 import AuthenticationError from '../../../exceptions/authentication-error.js';
-
-// 🛠️ SISIPKAN IMPORT SERVICE CHATBOT DI SINI (Sesuaikan jalurnya jika berbeda)
 import ChatbotService from '../../chatbot/services/chatbot-service.js';
 
 const chatbotService = new ChatbotService();

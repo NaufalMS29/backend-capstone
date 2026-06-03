@@ -18,7 +18,6 @@ export const uploadMasterCsvHandler = async (req, res, next) => {
   }
 };
 
-// ─── HANDLER BARU: MENANGGAPI GET REQUEST DARI FRONTEND ───────────────
 export const getMasterCsvHandler = async (req, res, next) => {
   try {
     const data = await sppgMasterService.getMasterSppg();

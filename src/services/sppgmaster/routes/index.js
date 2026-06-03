@@ -1,4 +1,3 @@
-// index.js (Router - SPPG Master)
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
@@ -6,9 +5,10 @@ import { uploadMasterCsvHandler, getMasterCsvHandler } from '../controller/sppgm
 import authMiddleware from '../../../middlewares/auth.js';
 
 const router = express.Router();
+const storage = multer.memoryStorage();
 
 const upload = multer({
-  dest: 'uploads/',
+  storage: storage,
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname);
     if (ext !== '.csv') {
@@ -18,9 +18,7 @@ const upload = multer({
   }
 });
 
-// ─── PERBAIKAN: Hilangkan kata '/api' agar tidak dobel/bentrok ───────────
-// Jika server utama menggunakan app.use('/api', ...), rute ini otomatis menjadi /api/sppg/master/csv
-router.post('/api/sppg/master/csv', authMiddleware, upload.single('file'), uploadMasterCsvHandler);
-router.get('/api/sppg/master/csv', authMiddleware, getMasterCsvHandler);
+router.post('/sppg/master/csv', authMiddleware, upload.single('file'), uploadMasterCsvHandler);
+router.get('/sppg/master/csv', authMiddleware, getMasterCsvHandler);
 
 export default router;

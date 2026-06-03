@@ -5,21 +5,18 @@ class DashboardRepository {
     this._pool = pool;
   }
 
-  // 1. Hitung total baris di tabel master_sppg (Total SPPG Terdaftar)
   async getTotalSppgMaster() {
     const query = 'SELECT COUNT(*) AS total FROM master_sppg';
     const result = await this._pool.query(query);
     return parseInt(result.rows[0].total) || 0;
   }
 
-  // 2. Hitung total siswa (SUM total_siswa) dari tabel sppg_analyses
   async getTotalSiswaAnalyses() {
     const query = 'SELECT SUM(total_siswa) AS total FROM sppg_analyses';
     const result = await this._pool.query(query);
     return parseInt(result.rows[0].total) || 0;
   }
 
-  // 3. Menghitung wilayah prioritas yang berstatus SANGAT_KURANG atau KURANG
   async getTotalWilayahPrioritas() {
     const query = `
       SELECT COUNT(*) AS total 
@@ -30,10 +27,6 @@ class DashboardRepository {
     return parseInt(result.rows[0].total) || 0;
   }
 
-  // 4. 💡 PERBAIKAN UTAMA (Mencegah Duplikasi Wilayah di Top 5):
-  // Menggunakan Common Table Expression (CTE) dan DISTINCT ON untuk menyaring wilayah duplikat,
-  // mengambil gap paling minus (paling kritis) dari wilayah tersebut,
-  // serta otomatis menarik wilayah unik di bawahnya untuk mengisi slot Top 5.
   async getTopKerawanan() {
     const query = `
       WITH unique_kerawanan AS (

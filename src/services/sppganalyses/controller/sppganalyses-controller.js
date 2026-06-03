@@ -17,26 +17,23 @@ class SppgAnalysesController {
         return responseHelper(res, 400, 'Gagal melakukan analisis. Mohon sertakan nama_wilayah.', null);
       }
 
-      // 💡 VALIDASI INPUT UMUM/AMBIGU (Mencegah input arah mata angin atau keyword terlalu umum saja)
       const cleanInput = nama_wilayah.trim().toUpperCase();
       const vagueInputs = [
-        'TIMUR', 'BARAT', 'UTARA', 'SELATAN', 'PUSAT', 'TENGGARA', 
+        'TIMUR', 'BARAT', 'UTARA', 'SELATAN', 'PUSAT', 'TENGGARA',
         'BARAT DAYA', 'BARAT LAUT', 'TIMUR LAUT', 'KOTA', 'KABUPATEN', 'KAB'
       ];
 
       if (vagueInputs.includes(cleanInput) || cleanInput.length < 3) {
         return responseHelper(
-          res, 
-          400, 
-          'Gagal melakukan analisis. Input nama wilayah terlalu umum atau tidak spesifik (contoh: "timur" atau "barat" saja tidak diperbolehkan). Mohon sebutkan nama wilayah, kabupaten, atau kota secara lengkap (misal: "Jakarta Timur" atau "Sanggau").', 
+          res,
+          400,
+          'Gagal melakukan analisis. Input nama wilayah terlalu umum atau tidak spesifik (contoh: "timur" atau "barat" saja tidak diperbolehkan). Mohon sebutkan nama wilayah, kabupaten, atau kota secara lengkap (misal: "Jakarta Timur" atau "Sanggau").',
           null
         );
       }
 
-      // Ambil userId dari request terautentikasi (admin)
       let userId = req.user?.id || null;
 
-      // Fallback userId dari PostgreSQL jika diakses publik tanpa login
       if (!userId) {
         try {
           const userResult = await this._sppgAnalysesRepository._pool.query(
@@ -50,15 +47,12 @@ class SppgAnalysesController {
         }
       }
 
-      // 1. Dapatkan nama wilayah resmi melalui stats (Fuzzy Matching)
       const stats = await this._sppgAnalysesRepository.getMasterWilayahStats(nama_wilayah);
       const namaWilayahResmi = stats ? stats.nama_wilayah : nama_wilayah.trim().toUpperCase();
 
-      // 2. PERIKSA CACHE DATABASE TERLEBIH DAHULU (HANYA MENCARI)
       const existingAnalyses = await this._sppgAnalysesRepository.getSppgAnalyses(namaWilayahResmi);
 
       if (existingAnalyses && existingAnalyses.length > 0) {
-        // DATA DITEMUKAN di database: Langsung kembalikan dari database TANPA menembak FastAPI & TANPA save ulang
         const cachedRow = existingAnalyses[0];
 
         const cachedOutput = {
@@ -72,12 +66,10 @@ class SppgAnalysesController {
           status: cachedRow.status || cachedRow.result?.status || 'UNKNOWN',
           interpretasi: cachedRow.interpretasi || cachedRow.result?.interpretasi || 'Tidak ada interpretasi.',
           rekomendasi_kebijakan: cachedRow.rekomendasi_kebijakan || cachedRow.rekomendasi || cachedRow.result?.rekomendasi_kebijakan || 'Tidak ada rekomendasi.',
-          // 💡 SINKRONISASI CACHE: Mengembalikan penjelasan_prediksi murni dari database Anda
           penjelasan_prediksi: cachedRow.penjelasan_prediksi || cachedRow.result?.penjelasan_prediksi || 'Tidak ada penjelasan.',
           model_llm: cachedRow.model_llm || cachedRow.result?.model_llm || 'openai/gpt-oss-120b:free'
         };
 
-        // Tambahkan tag (Cached) pada model LLM untuk menandakan data ini ditarik dari database lokal
         if (!cachedOutput.model_llm.includes('(Cached)')) {
           cachedOutput.model_llm = `${cachedOutput.model_llm} (Cached)`;
         }
@@ -88,7 +80,6 @@ class SppgAnalysesController {
         });
       }
 
-      // 3. JIKA BELUM ADA DI DATABASE: Siapkan data sekolah untuk dikirim ke FastAPI
       const dataSekolah = stats ? {
         kb_sederajat: Number(stats.kb_sederajat) || 0,
         kode_provinsi: stats.kode_provinsi || '32',
@@ -115,12 +106,10 @@ class SppgAnalysesController {
         tpa: 50
       };
 
-      // 4. JIKA TIDAK ADA DI DATABASE: Ambil/Prediksi data dari server FastAPI AI
       const responseAi = await fastApiClient.post(`/predict-and-analyze?nama_wilayah=${encodeURIComponent(namaWilayahResmi)}`, dataSekolah);
 
       const { prediksi, analisis_ai } = responseAi.data;
 
-      // Hitung rasio cakupan sekolah secara dinamis
       const totalSekolah =
         dataSekolah.sd_sederajat + dataSekolah.smp_sederajat +
         dataSekolah.sma_sederajat + dataSekolah.smk_sederajat +
@@ -133,7 +122,6 @@ class SppgAnalysesController {
       const rasioSmp = parseFloat((dataSekolah.smp_sederajat / pembagi * 100).toFixed(2));
       const rasioSmaSmk = parseFloat(((dataSekolah.sma_sederajat + dataSekolah.smk_sederajat) / pembagi * 100).toFixed(2));
 
-      // Susun hasil prediksi lengkap dari FastAPI
       const completeOutput = {
         total_siswa: dataSekolah.total_siswa,
         rasio_sd: rasioSd,
@@ -149,14 +137,12 @@ class SppgAnalysesController {
         model_llm: analisis_ai.model_llm || 'openai/gpt-oss-120b:free'
       };
 
-      // 5. SIMPAN HASIL BARU TERSEBUT KE DATABASE (SAVE)
       const analysisId = await this._sppgAnalysesRepository.addSppgAnalysis(
         userId,
         { nama_wilayah: namaWilayahResmi },
         completeOutput
       );
 
-      // Kembalikan output segar yang berhasil disimpan
       return responseHelper(res, 201, `Analisis wilayah '${namaWilayahResmi}' baru berhasil diproses via FastAPI dan disimpan ke database.`, {
         analysisId,
         result: completeOutput,

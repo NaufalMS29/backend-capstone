@@ -18,21 +18,15 @@ export const getPredict = async (req, res) => {
   }
 };
 
-/**
- * FIX TOTAL: Membuat mapping objek secara manual, kaku, dan agresif
- * agar properti 'analisis_narasi' DIJAMIN 100% keluar di dalam JSON response.
- */
 export const getAnalyze = async (req, res) => {
   try {
     const result = await fastapiService.analyze(req.body);
 
-    // Kita buat objek baru secara manual dari nol agar strukturnya paten
     const mappedResult = {
       nama_wilayah: result.nama_wilayah || "Wilayah tidak diketahui",
       rekomendasi_kebijakan: result.rekomendasi_kebijakan || "",
       penjelasan_prediksi: result.penjelasan_prediksi || "",
       model_llm: result.model_llm || "",
-      // SUNTIKAN WAJIB: Duplikasi teks rekomendasi kebijakan ke analisis_narasi
       analisis_narasi: result.rekomendasi_kebijakan || "Analisis berhasil diproses"
     };
 
@@ -59,7 +53,6 @@ export const getPredictAndAnalyze = async (req, res) => {
     const wilayah = req.query.nama_wilayah || "Wilayah tidak disebutkan";
     const result = await fastapiService.predictAndAnalyze(wilayah, req.body);
 
-    // Proteksi ekstra untuk endpoint One-Shot
     if (result && result.analisis_ai) {
       result.analisis_ai.analisis_narasi = result.analisis_ai.rekomendasi_kebijakan || "Analisis berhasil diproses";
     }

@@ -49,17 +49,12 @@ class SppgPredictCsvController {
 
       const userId = req.user ? req.user.id : 'system-batch';
 
-      // ==========================================
-      // STRATEGI ANTI-REDUNDANSI BATCH (ISOLASI JALUR CSV)
-      // ==========================================
-      // 2. Ambil semua riwayat analisis khusus CSV
       const existingAnalyses = await this._service.getPredictionHistory();
 
       const dataToProcessToAi = [];
       const cachedDataResults = [];
 
       for (const row of rows) {
-        // PERBAIKAN: COCOKKAN NAMA WILAYAH DAN PASTIKAN INPUT_TYPE === 'CSV'
         const matchCache = existingAnalyses.find(
           (exist) =>
             exist.nama_wilayah.toLowerCase().trim() === row.nama_wilayah.toLowerCase().trim() &&
@@ -83,14 +78,13 @@ class SppgPredictCsvController {
             rekomendasi_kebijakan: matchCache.rekomendasi_kebijakan,
             penjelasan_prediksi: matchCache.penjelasan_prediksi,
             model_llm: matchCache.model_llm.includes('(Cached)') ? matchCache.model_llm : `${matchCache.model_llm} (Cached)`,
-            input_type: 'CSV' // Bawa tipe data asal
+            input_type: 'CSV'
           });
         } else {
           dataToProcessToAi.push(row);
         }
       }
 
-      // 3. Hanya menembak FastAPI jika ada data yang benar-benar baru
       let aiPredictionsResult = [];
       if (dataToProcessToAi.length > 0) {
         const CHUNK_SIZE = 100;
@@ -113,7 +107,6 @@ class SppgPredictCsvController {
         }
       }
 
-      // 4. Jalankan penggabungan data baru dan cache
       const finalInserted = await this._service.processAndCombineBatch(
         userId,
         dataToProcessToAi,

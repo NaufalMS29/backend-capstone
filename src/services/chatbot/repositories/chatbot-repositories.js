@@ -16,9 +16,6 @@ class ChatbotRepository {
     return result.rows[0];
   }
 
-  // =========================================================================
-  // LOKASI YANG BENAR: Harus ada di dalam kurung kurawal Class ChatbotRepository
-  // =========================================================================
   async getSessionById(sessionId) {
     const query = {
       text: 'SELECT * FROM chat_sessions WHERE id = $1',
@@ -36,7 +33,6 @@ class ChatbotRepository {
     const result = await this._pool.query(query);
     return result.rows[0];
   }
-  // =========================================================================
 
   async getSessionsByUserId(userId) {
     const query = {
@@ -94,7 +90,6 @@ class ChatbotRepository {
     return await this._pool.query(query);
   }
 
-  // [Opsional] Jika Anda ingin sekalian menghapus Judul Sesinya di sidebar:
   async deleteSessionsByUserId(userId) {
     const query = {
       text: 'DELETE FROM chat_sessions WHERE user_id = $1',

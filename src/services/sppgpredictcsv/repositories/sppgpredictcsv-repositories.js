@@ -10,7 +10,6 @@ class SppgPredictCsvRepository {
     try {
       await client.query('BEGIN');
 
-      // PERBAIKAN: Menambahkan kolom input_type (Total menjadi 16 kolom)
       const queryText = `
         INSERT INTO sppg_analyses 
         (
@@ -38,22 +37,22 @@ class SppgPredictCsvRepository {
 
       for (const data of batchData) {
         const values = [
-          data.id,                    // $1
-          data.user_id,               // $2
-          data.nama_wilayah,          // $3
-          data.total_siswa,           // $4
-          data.rasio_sd,              // $5
-          data.rasio_smp,             // $6
-          data.rasio_sma_smk,         // $7
-          data.jumlah_sppg_prediksi,  // $8
-          data.kebutuhan_sppg,        // $9
-          data.gap_prediksi,          // $10
-          data.status,                // $11
-          data.interpretasi || '',    // $12
-          data.rekomendasi_kebijakan, // $13
-          data.penjelasan_prediksi,   // $14
-          data.model_llm,             // $15
-          'CSV'                       // $16 ◄ Kunci nilai bertipe 'CSV'
+          data.id,
+          data.user_id,
+          data.nama_wilayah,
+          data.total_siswa,
+          data.rasio_sd,
+          data.rasio_smp,
+          data.rasio_sma_smk,
+          data.jumlah_sppg_prediksi,
+          data.kebutuhan_sppg,
+          data.gap_prediksi,
+          data.status,
+          data.interpretasi || '',
+          data.rekomendasi_kebijakan,
+          data.penjelasan_prediksi,
+          data.model_llm,
+          'CSV'
         ];
 
         const res = await client.query(queryText, values);
@@ -75,7 +74,6 @@ class SppgPredictCsvRepository {
   }
 
   async findAllPredictions() {
-    // PERBAIKAN: Mengunci history tabel agar hanya menarik baris ber-label 'CSV'
     const query = `
       SELECT 
         id, 

@@ -1,5 +1,5 @@
 import DashboardService from '../services/dashboard-service.js';
-import response from '../../../utils/response.js'; // Sesuaikan utility response seragam Anda
+import response from '../../../utils/response.js';
 
 const dashboardService = new DashboardService();
 

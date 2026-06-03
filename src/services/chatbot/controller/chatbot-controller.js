@@ -66,7 +66,6 @@ class ChatbotController {
         return responseHelper(res, 400, 'Pesan wajib diisi.');
       }
 
-      // Teruskan message dan fastapi_session_id (bisa bernilai null jika ini chat pertama) ke service
       const aiResponse = await this._service.sendPublicMessageToAi(message, fastapi_session_id || null);
 
       return responseHelper(res, 200, 'Pesan publik berhasil diproses oleh AI', aiResponse);

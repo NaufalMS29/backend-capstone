@@ -10,7 +10,6 @@ class SppgAnalysesRepository {
   async addSppgAnalysis(userId, inputData, aiOutput) {
     const id = nanoid(16);
 
-    // PERBAIKAN: Menambahkan kolom input_type dengan nilai 'MANUAL' (Total 16 Kolom)
     const query = {
       text: `INSERT INTO sppg_analyses (
         id, user_id, nama_wilayah, total_siswa, rasio_sd, rasio_smp, rasio_sma_smk,
@@ -34,7 +33,7 @@ class SppgAnalysesRepository {
         aiOutput.rekomendasi_kebijakan || '',
         aiOutput.penjelasan_prediksi || '',
         aiOutput.model_llm || 'LLM Model',
-        'MANUAL' // ◄ Parameter $16: Mengunci label khusus jalur form manual
+        'MANUAL'
       ],
     };
 
@@ -65,7 +64,6 @@ class SppgAnalysesRepository {
   }
 
   async getSppgAnalyses(namaWilayah = null) {
-    // PERBAIKAN: Menambahkan penyaring "sa.input_type = 'MANUAL'" di kedua kondisi query
     if (namaWilayah) {
       const query = {
         text: `SELECT sa.*, u.name as user_name 
