@@ -10,6 +10,9 @@ import authentications from '../services/authentications/routes/index.js';
 
 const router = Router();
 
+router.get('/', (req, res) => {
+  res.json({ message: "Welcome to Capstone API" });
+});
 router.use('/', fastapiRoutes);
 router.use('/', sppgAnalysesRoutes);
 router.use('/api', sppgPredictCsvRoutes);
