@@ -1,4 +1,3 @@
-// sppgmaster-controller.js
 import SppgMasterService from '../services/sppgmaster-service.js';
 import response from '../../../utils/response.js';
 import InvariantError from '../../../exceptions/invariant-error.js';
@@ -10,8 +9,11 @@ export const uploadMasterCsvHandler = async (req, res, next) => {
     if (!req.file) {
       throw new InvariantError('Gagal mengunggah berkas. Mohon lampirkan file CSV yang valid.');
     }
-    const filePath = req.file.path;
-    const totalInserted = await sppgMasterService.importMasterCsv(filePath);
+
+    const fileBuffer = req.file.buffer;
+
+    const totalInserted = await sppgMasterService.importMasterCsv(fileBuffer);
+
     return response(res, 201, `Berhasil mengimpor ${totalInserted} baris data master fisik SPPG ke database.`);
   } catch (error) {
     next(error);

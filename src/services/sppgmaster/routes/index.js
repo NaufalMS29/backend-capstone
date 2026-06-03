@@ -1,14 +1,14 @@
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
+import os from 'os'; // ─── TAMBAHKAN INI ───
 import { uploadMasterCsvHandler, getMasterCsvHandler } from '../controller/sppgmaster-controller.js';
 import authMiddleware from '../../../middlewares/auth.js';
 
 const router = express.Router();
-const storage = multer.memoryStorage();
 
 const upload = multer({
-  storage: storage,
+  dest: os.tmpdir(),
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname);
     if (ext !== '.csv') {
