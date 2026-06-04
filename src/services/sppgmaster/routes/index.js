@@ -9,6 +9,9 @@ const router = express.Router();
 
 const upload = multer({
   dest: os.tmpdir(),
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+  },
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname);
     if (ext !== '.csv') {
