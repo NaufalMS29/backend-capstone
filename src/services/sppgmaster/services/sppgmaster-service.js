@@ -57,9 +57,8 @@ class SppgMasterService {
     });
   }
 
-  async getMasterSppg() {
-    const data = await this._repository.getAllMasterData();
-    return data;
+  async getMasterSppg(page = 1, limit = 100) {
+    return await this._repository.getAllMasterData(page, limit);
   }
 }
 

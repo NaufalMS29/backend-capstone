@@ -29,10 +29,26 @@ class SppgMasterRepository {
     await this._pool.query(query);
   }
 
-  async getAllMasterData() {
-    const query = 'SELECT id, no_sppg, provinsi, kab_kota, kecamatan, kelurahan, alamat, nama_sppg FROM master_sppg ORDER BY id ASC';
-    const result = await this._pool.query(query);
-    return result.rows;
+  async getAllMasterData(page = 1, limit = 100) {
+    const offset = (page - 1) * limit;
+
+    const dataQuery = {
+      text: `SELECT id, no_sppg, provinsi, kab_kota, kecamatan, kelurahan, alamat, nama_sppg 
+           FROM master_sppg ORDER BY id ASC LIMIT $1 OFFSET $2`,
+      values: [limit, offset],
+    };
+
+    const countQuery = 'SELECT COUNT(*) FROM master_sppg';
+
+    const [dataResult, countResult] = await Promise.all([
+      this._pool.query(dataQuery),
+      this._pool.query(countQuery),
+    ]);
+
+    return {
+      data: dataResult.rows,
+      total: parseInt(countResult.rows[0].count),
+    };
   }
 }
 

@@ -22,8 +22,17 @@ export const uploadMasterCsvHandler = async (req, res, next) => {
 
 export const getMasterCsvHandler = async (req, res, next) => {
   try {
-    const data = await sppgMasterService.getMasterSppg();
-    return response(res, 200, 'Berhasil mengambil data master fisik SPPG.', data);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 100;
+
+    const result = await sppgMasterService.getMasterSppg(page, limit);
+
+    return response(res, 200, 'Berhasil mengambil data master fisik SPPG.', {
+      data: result.data,
+      total: result.total,
+      page,
+      totalPages: Math.ceil(result.total / limit),
+    });
   } catch (error) {
     next(error);
   }
