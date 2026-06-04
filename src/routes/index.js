@@ -17,7 +17,7 @@ router.use('/', fastapiRoutes);
 router.use('/', sppgAnalysesRoutes);
 router.use('/api', sppgPredictCsvRoutes);
 router.use('/', chatbotRoutes);
-router.use('/', sppgMasterRoutes);
+router.use('/api', sppgMasterRoutes);
 router.use('/', dashboardRoutes);
 router.use('/', users);
 router.use('/', authentications);
