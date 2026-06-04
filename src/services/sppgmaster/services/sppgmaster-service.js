@@ -1,5 +1,6 @@
 import fs from 'fs';
 import csv from 'csv-parser';
+import { Readable } from 'stream';
 import SppgMasterRepository from '../repositories/sppgmaster-repositories.js';
 
 class SppgMasterService {
@@ -7,11 +8,11 @@ class SppgMasterService {
     this._repository = new SppgMasterRepository();
   }
 
-  async importMasterCsv(filePath) {
+  async importMasterCsv(csvContent) {
     const results = [];
 
     return new Promise((resolve, reject) => {
-      fs.createReadStream(filePath)
+      Readable.from(csvContent)
         .pipe(csv({
           mapHeaders: ({ header }) => header.trim().toLowerCase().replace(/[^a-z0-9]/g, '')
         }))
@@ -40,18 +41,12 @@ class SppgMasterService {
               await this._repository.insertMasterRow(mappedData);
             }
 
-            if (fs.existsSync(filePath)) {
-              fs.unlinkSync(filePath);
-            }
-
             resolve(results.length);
           } catch (error) {
-            if (fs.existsSync(filePath)) { fs.unlinkSync(filePath); }
             reject(error);
           }
         })
         .on('error', (error) => {
-          if (fs.existsSync(filePath)) { fs.unlinkSync(filePath); }
           reject(error);
         });
     });
