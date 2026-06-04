@@ -7,24 +7,15 @@ import ErrorHandler from '../middlewares/error.js';
 const app = express();
 
 app.use(cors({
-  origin: '*',
+  origin: function (origin, callback) {
+    callback(null, true);
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   credentials: true
 }));
 
-app.options(/(.*)/, (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-  res.sendStatus(200);
-});
 app.use(express.json());
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  next();
-});
-
 app.use(routes);
 app.use(ErrorHandler);
 
