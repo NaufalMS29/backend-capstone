@@ -1,16 +1,21 @@
 import SppgMasterService from '../services/sppgmaster-service.js';
 import response from '../../../utils/response.js';
 import InvariantError from '../../../exceptions/invariant-error.js';
+import fetch from 'node-fetch';
 
 const sppgMasterService = new SppgMasterService();
 
 export const uploadMasterCsvHandler = async (req, res, next) => {
   try {
-    if (!req.file) {
+    const { fileUrl } = req.body;
+
+    if (!fileUrl) {
       throw new InvariantError('Gagal mengunggah berkas. Mohon lampirkan file CSV yang valid.');
     }
 
-    const fileBuffer = req.file.buffer;
+    // Download file dari Supabase
+    const fileRes = await fetch(fileUrl);
+    const fileBuffer = Buffer.from(await fileRes.arrayBuffer());
 
     const totalInserted = await sppgMasterService.importMasterCsv(fileBuffer);
 

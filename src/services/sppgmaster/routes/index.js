@@ -21,7 +21,7 @@ const upload = multer({
   }
 });
 
-router.post('/sppg/master/csv', authMiddleware, upload.single('file'), uploadMasterCsvHandler);
+router.post('/sppg/master/csv', authMiddleware, uploadMasterCsvHandler);
 router.get('/sppg/master/csv', authMiddleware, getMasterCsvHandler);
 
 export default router;
