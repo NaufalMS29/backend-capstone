@@ -5,64 +5,155 @@ class SppgMasterRepository {
     this._pool = pool;
   }
 
-  async truncateMasterTable() {
-    const query = 'TRUNCATE TABLE master_sppg RESTART IDENTITY';
-    await this._pool.query(query);
-  }
+  /**
+   * Import seluruh data menggunakan Transaction
+   * Jika gagal, database akan kembali seperti semula.
+   */
+  async replaceMasterData(dataArray) {
+    const client = await this._pool.connect();
 
-  // 💡 SEKARANG MENERIMA ARRAY OF OBJECTS (Mendukung Batch Insert 1000 data sekaligus)
-  async insertMasterRow(dataArray) {
-    if (!Array.isArray(dataArray) || dataArray.length === 0) { return; }
+    try {
+      await client.query('BEGIN');
 
-    const values = [];
-    const placeholders = [];
-    let counter = 1;
+      //---------------------------------------
+      // Kosongkan tabel
+      //---------------------------------------
 
-    // Menyusun query multi-row: ($1, $2, $3...), ($8, $9, $10...) secara dinamis
-    for (const row of dataArray) {
-      placeholders.push(`($${counter}, $${counter + 1}, $${counter + 2}, $${counter + 3}, $${counter + 4}, $${counter + 5}, $${counter + 6})`);
+      await client.query('TRUNCATE TABLE master_sppg RESTART IDENTITY');
 
-      values.push(
-        row.no_sppg,
-        row.provinsi,
-        row.kab_kota,
-        row.kecamatan,
-        row.kelurahan,
-        row.alamat,
-        row.nama_sppg
-      );
+      //---------------------------------------
+      // Tidak ada data
+      //---------------------------------------
 
-      counter += 7; // Karena ada 7 kolom yang dimasukkan per baris
+      if (!Array.isArray(dataArray) || dataArray.length === 0) {
+        throw new Error('Data CSV kosong.');
+      }
+
+      //---------------------------------------
+      // Batch Insert
+      //---------------------------------------
+
+      const batchSize = 1000;
+
+      for (let i = 0; i < dataArray.length; i += batchSize) {
+        const batch = dataArray.slice(i, i + batchSize);
+
+        const values = [];
+        const placeholders = [];
+
+        let counter = 1;
+
+        for (const row of batch) {
+
+          placeholders.push(
+            `($${counter},
+              $${counter + 1},
+              $${counter + 2},
+              $${counter + 3},
+              $${counter + 4},
+              $${counter + 5},
+              $${counter + 6})`
+          );
+
+          values.push(
+            row.no_sppg,
+            row.provinsi,
+            row.kab_kota,
+            row.kecamatan,
+            row.kelurahan,
+            row.alamat,
+            row.nama_sppg
+          );
+
+          counter += 7;
+        }
+
+        await client.query({
+          text: `
+            INSERT INTO master_sppg
+            (
+              no_sppg,
+              provinsi,
+              kab_kota,
+              kecamatan,
+              kelurahan,
+              alamat,
+              nama_sppg
+            )
+
+            VALUES
+
+            ${placeholders.join(',')}
+          `,
+          values,
+        });
+      }
+
+      //---------------------------------------
+      // Semua berhasil
+      //---------------------------------------
+
+      await client.query('COMMIT');
+
+      return dataArray.length;
+    } catch (error) {
+
+      //---------------------------------------
+      // Jika ada error,
+      // semua perubahan dibatalkan
+      //---------------------------------------
+
+      await client.query('ROLLBACK');
+
+      throw error;
+
+    } finally {
+
+      client.release();
+
     }
-
-    const queryText = `
-      INSERT INTO master_sppg (no_sppg, provinsi, kab_kota, kecamatan, kelurahan, alamat, nama_sppg)
-      VALUES ${placeholders.join(', ')}
-    `;
-
-    // Eksekusi insert 1000 baris sekaligus dalam 1 kali perjalanan ke database!
-    await this._pool.query({ text: queryText, values });
   }
 
   async getAllMasterData(page = 1, limit = 100) {
+
     const offset = (page - 1) * limit;
 
     const dataQuery = {
-      text: `SELECT id, no_sppg, provinsi, kab_kota, kecamatan, kelurahan, alamat, nama_sppg 
-             FROM master_sppg ORDER BY id ASC LIMIT $1 OFFSET $2`,
+      text: `
+        SELECT
+            id,
+            no_sppg,
+            provinsi,
+            kab_kota,
+            kecamatan,
+            kelurahan,
+            alamat,
+            nama_sppg
+
+        FROM master_sppg
+
+        ORDER BY id ASC
+
+        LIMIT $1 OFFSET $2
+      `,
       values: [limit, offset],
     };
 
-    const countQuery = 'SELECT COUNT(*) FROM master_sppg';
+    const countQuery = {
+      text: `
+        SELECT COUNT(*) AS total
+        FROM master_sppg
+      `,
+    };
 
-    const [dataResult, countResult] = await Promise.all([
+    const [rows, count] = await Promise.all([
       this._pool.query(dataQuery),
       this._pool.query(countQuery),
     ]);
 
     return {
-      data: dataResult.rows,
-      total: parseInt(countResult.rows[0].count, 10),
+      data: rows.rows,
+      total: Number(count.rows[0].total),
     };
   }
 }
