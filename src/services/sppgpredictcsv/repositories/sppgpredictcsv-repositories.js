@@ -49,10 +49,10 @@ class SppgPredictCsvRepository {
           data.gap_prediksi,
           data.status,
           data.interpretasi || '',
-          data.rekomendasi_kebijakan,
-          data.penjelasan_prediksi,
-          data.model_llm,
-          'CSV'
+          data.rekomendasi_kebijakan || '',
+          data.penjelasan_prediksi || '',
+          data.model_llm || 'FastAPI',
+          data.input_type || 'CSV'
         ];
 
         const res = await client.query(queryText, values);
